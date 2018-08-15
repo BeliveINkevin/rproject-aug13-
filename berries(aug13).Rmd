@@ -1,0 +1,77 @@
+---
+title: "Berries"
+author: "Kevin"
+date: "August 13, 2018"
+output: html_document
+---
+
+##Examining the chewness and springiness of berries based on some factors regarding concentration
+For this project, I have several goals that I will adress later in this project. This project will combine 2 datasets from the website http://users.stat.ufl.edu/~winner/datasets.html under the "linear regression" section which is abbreviated as "LR 1a) Linear Regression". There are 2 datasets which deal with sugar equivalent and both the chewiness and springiness of berries. The factors from these 2 datasets include
+
+####1.NaCl concentration a.k.a Salt
+####2.Sugar equivalent (in g/L). It's the same as sugar content from the springy dataset
+####3.Chewiness(mJ) of Berries from 6 sugar equivalent levels( 15 berries per level)
+####4.Springiness(mm) of Berries=elasticity and can be stretched and return to its original length
+
+The other dataset which deals with springiness has some variables including SugTrt, sugCont, and springiness(elasticity and can be stretched and return to its original length)
+
+##Looking at the data
+
+```{r}
+library(readr)
+library(ggplot2)
+library(ggpubr)
+library(dplyr)
+chewy<-read_csv("C:/Users/kevin/Downloads/berry_sugar_chewy.csv")
+springy<-read_csv("C:/Users/kevin/Downloads/berry_sugar_springy.csv")
+summary(chewy)
+summary(springy)
+```
+
+#Merging the data
+For me, I decided to merge the data by combine the 2 datasets into one. I merged the data according the NaCl since that is what both of the datasets have in commmon. 
+```{r}
+entiredata <- dplyr::bind_cols(chewy,springy)
+nrow(entiredata)
+head(entiredata)
+tail(entiredata)
+```
+You can see above that the 4th column which is sugTrt is placed that way when I merged the datasets. To make things look more organized, I am going to shift the 4th column to make the the 5th column to make the dataset look more organized. Also since chewiness and springiness are dependant variables, i decided to put those columns first in the dataset
+
+```{r}
+entiredata=entiredata[,-c(4,6)]
+entiredata=entiredata[,c(3,5,1,2,4)]
+head(entiredata)
+tail(entiredata)
+```
+Now this looks nicer!
+
+#Plotting several factors against the chewiness of the berries
+```{r}
+xx<-ggplot(data=entiredata,aes(x=entiredata$chewiness,y=entiredata$sugar))+geom_jitter()
+xy<-ggplot(data=entiredata,aes(x=entiredata$chewiness,y=entiredata$springiness))+geom_jitter()
+xz<-ggplot(data=entiredata,aes(x=entiredata$chewiness,y=entiredata$nacl))+geom_jitter()
+
+figure<-ggarrange(xx,xy,xz,labels=c("a","b","c"), ncol=2, nrow=2)
+figure
+```
+#Here is a graph that covers sugTrt vs chewiness. The colors are what define the variety
+```{r}
+tt<-ggplot(data=entiredata,aes(x=entiredata$chewiness,y=entiredata$sugTrt,
+                               color=factor(entiredata$sugTrt)))+geom_jitter()
+tt
+```
+From looking at this colored graph. It appears that the berries with the least sugar( the orange ones) were the most chewiness. We can see a correlation between sugar and chewiness. The less sugar, the more chewy, and so on. From graph "B", it appears that there is a upward correlation between chewiness and elasticiy. 
+
+#Checking the accuracy of the models that I will create
+The goal now is to see if the chewiness and springiness are dependant on several independant variables.Since the chewiness and springiness are both dependant variables. I will calculate the regressions seperately.
+
+```{r}
+chewiness<-lm(entiredata$chewiness~entiredata$springiness+entiredata$nacl+entiredata$sugar)
+summary(chewiness)
+springiness<-lm(entiredata$springiness~entiredata$chewiness+entiredata$nacl+entiredata$sugar)
+summary(springiness)
+```
+
+##What can I say about these 2 models that I created?
+Looking at both of them, it appears that the second model which had an $R^2$ value of close to 51% was much more accurate than the previous model, which had an $R^2$ of 31%. There are some good reasons as to why the elasticy of the berries is more accurate than the chewiness of the berries. 
